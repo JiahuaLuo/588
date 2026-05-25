@@ -1,0 +1,22 @@
+parameter,value,unit,notes
+selected_waveguide_width,0.50,um,Chosen from width sweep as the first AWG design baseline
+waveguide_height,0.22,um,Fixed silicon strip waveguide thickness
+core_index,3.48,dimensionless,Silicon refractive index used in MODE model
+cladding_index,1.44,dimensionless,SiO2 refractive index used in MODE model
+selected_neff,2.444579740420668,dimensionless,Fundamental mode effective index at 1550 nm
+selected_ngroup,4.051219463271623,dimensionless,Fundamental mode group index at 1550 nm
+channel_count,4,count,Simplified 4-channel demultiplexer target
+center_wavelength,1550.0,nm,C-band design center
+channel_spacing,1.6,nm,Approximately 200 GHz near 1550 nm
+channel_center_span,4.8,nm,Span between the first and last channel centers
+target_fsr,19.2,nm,Chosen as about 4x the 4-channel center span for safe separation
+awg_order_m,81,dimensionless,Rounded from lambda0 / target_fsr
+actual_fsr,19.135802469135804,nm,Computed from lambda0 / m
+delta_length,30.990668646375973,um,Arrayed waveguide path length difference from m*lambda0/ng
+arrayed_waveguide_count,16,count,Reasonable first-pass arm count for a simplified course project
+input_waveguide_count,1,count,Single input demultiplexer configuration
+output_waveguide_count,4,count,One output per channel
+suggested_fpr_length,50.0,um,Heuristic first-pass slab/FPR length for compact initial geometry
+suggested_array_pitch,1.5,um,Heuristic pitch at the array/FPR interface
+suggested_output_pitch,2.0,um,Heuristic output waveguide pitch before further tuning
+minimum_bend_radius,10.0,um,Conservative first-pass bend radius suggestion

@@ -1,0 +1,6 @@
+width_um,height_um,wavelength_um,n_eff_mode0,n_group_mode0,task_name,hdf5_path
+0.4,0.22,1.55,2.2275087703903718,4.244900328855026,silicon_strip_mode_width_400nm_1550nm,data/mode_width_sweep/waveguide_mode_width_400nm.hdf5
+0.45,0.22,1.55,2.3527122060277903,4.144360377059758,silicon_strip_mode_width_450nm_1550nm,data/mode_width_sweep/waveguide_mode_width_450nm.hdf5
+0.5,0.22,1.55,2.444579740420668,4.051219463271623,silicon_strip_mode_width_500nm_1550nm,data/mode_width_sweep/waveguide_mode_width_500nm.hdf5
+0.55,0.22,1.55,2.5131316130064905,3.9749212985369917,silicon_strip_mode_width_550nm_1550nm,data/mode_width_sweep/waveguide_mode_width_550nm.hdf5
+0.6,0.22,1.55,2.565697425670004,3.9142252403131006,silicon_strip_mode_width_600nm_1550nm,data/mode_width_sweep/waveguide_mode_width_600nm.hdf5

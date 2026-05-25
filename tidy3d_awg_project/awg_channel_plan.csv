@@ -1,0 +1,5 @@
+channel_id,center_wavelength_nm,center_frequency_THz,notes
+1,1547.6,193.7144,Lower-wavelength edge channel
+2,1549.2,193.5144,Inner channel
+3,1550.8,193.3147,Inner channel
+4,1552.4,193.1155,Higher-wavelength edge channel
