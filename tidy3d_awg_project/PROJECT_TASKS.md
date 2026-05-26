@@ -36,7 +36,8 @@
 - [x] 已完成 width sweep / group index 提取
 - [x] 已具备 AWG 初始参数估算所需的基础 waveguide 数据
 - [x] 已完成 AWG star coupler / arrayed waveguide length 的初步参数设计与简化频谱分析
-- [ ] 尚未完成高保真完整 demultiplexer FDTD 仿真
+- [x] 已完成一轮低成本 2D Tidy3D FDTD 器件级验证（output FPR / phased-array aperture）
+- [ ] 尚未完成高保真完整 demultiplexer 3D FDTD 仿真
 
 当前项目进度可视为：已经完成从“环境搭建”到“基础波导 MODE 验证”以及“低成本参数扫描与结果整理”的阶段，下一步应进入“AWG 初始设计参数估算”阶段。
 
@@ -115,7 +116,8 @@
 - [x] 已完成的基础 MODE 仿真（低 credit 消耗）
 - [x] 已完成的 waveguide width MODE sweep（低 credit 消耗）
 - [ ] 后续如进行 group index 相关 MODE 扫描（低到中等 credit 消耗，取决于扫描数量）
-- [ ] AWG / demultiplexer 的 FDTD 或器件级云端仿真（相对更高 credit 消耗，如需继续提高结果保真度）
+- [x] AWG output FPR 的 2D FDTD 器件级云端仿真（已完成，低于 1 FlexCredit）
+- [ ] 完整 AWG / demultiplexer 的 3D FDTD 或更高保真器件级云端仿真（相对更高 credit 消耗，如需继续提高结果保真度）
 
 ### 不会消耗 Tidy3D credit 的任务
 
@@ -143,8 +145,28 @@
 - [x] 生成 `AWG_FINAL_RESULTS.md`
 - [x] 生成 `EE588_AWG_Final_Project_Report.docx`
 
+## 新增高仿真验证结果
+
+- [x] 新增 `awg_high_fidelity_validation.py`
+- [x] 完成 4 个目标波长的 2D Tidy3D FDTD output-FPR 验证
+- [x] 生成 `awg_high_fidelity_results.csv`
+- [x] 生成 `AWG_HIGH_FIDELITY_SUMMARY.md`
+- [x] 生成 `report_assets/awg_high_fidelity_transmission.png`
+- [x] 保存云端仿真结果至 `data/high_fidelity_awg/`
+- [x] 确认 baseline 4-channel case 在高仿真中存在随 wavelength 变化的主输出迁移
+
+## Stretch Goals 进展
+
+- [x] 8-channel：完成一轮 8-output layout 的器件级尝试，`1550 nm` 在该配置下主输出落在 `out_7`
+- [x] 温度依赖：完成 `+40 K` 相位漂移测试，主输出从 baseline 的高编号端口回移到较低编号端口
+- [x] 降低串扰 / 插损：完成一轮 `array pitch / output pitch / output offset` 调整尝试，主输出集中度优于 baseline
+- [ ] 8-channel 的完整多波长系统验证仍未完成
+- [ ] 温度依赖的系统扫描和热稳定设计仍未完成
+- [ ] 串扰和插损的系统优化仍未完成
+
 ## 结果说明
 
 - [x] 当前最终结果采用的是“基于已有 Tidy3D MODE 数据的本地简化 AWG 频谱模型”
 - [x] 该结果适合课程项目的第一版最终提交与结果总结
-- [ ] 该结果仍不是完整高保真 Tidy3D FDTD 器件仿真，如后续还有时间，可继续补充
+- [x] 当前已补充一轮 2D Tidy3D FDTD 器件级验证，可作为高于 local model 的第二层证据
+- [ ] 该结果仍不是完整高保真 Tidy3D 3D FDTD 全器件仿真，如后续还有时间，可继续补充

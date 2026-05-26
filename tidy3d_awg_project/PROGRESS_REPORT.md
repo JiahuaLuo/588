@@ -134,6 +134,35 @@ First-pass simplified geometry parameters:
 
 因此，从课程项目提交角度看，当前版本已经可以作为一套完整的 final submission。后续如果还有额外时间，最优先的增强方向仍然是补做一次或少量几次更高保真的 Tidy3D 器件级仿真，用于进一步验证 passband 形状、插损与串扰。
 
+## High-Fidelity Validation Update
+
+在最终结果包完成后，本周又进一步补做了一轮真正的 Tidy3D 云端器件级验证。考虑到完整 3D AWG 全器件 FDTD 的估算成本过高，单次约 `7.8 FlexCredit`，因此本轮没有直接运行完整 3D 结构，而是改为一套成本可控的 `2D effective-index FDTD` output-FPR validation workflow。
+
+该 workflow 的特点是：
+
+- 保留了 Tidy3D FDTD 的器件级电磁传播求解
+- 显式建模了 phased-array aperture、slab / FPR、以及 output waveguides
+- 避免了完整 `2 mm` 级 array-arm meander 的高内存与高 credit 开销
+- 单次仿真估算成本约 `0.074 FlexCredit`
+- 本轮共运行 7 个任务，总估算成本约 `0.52 FlexCredit`
+
+baseline `4-channel` 验证结果显示：
+
+- `1547.6 nm` 时主输出为 `out_3`
+- `1549.2 nm` 时主输出为 `out_3`
+- `1550.8 nm` 时主输出为 `out_4`
+- `1552.4 nm` 时主输出为 `out_4`
+
+这说明在更物理的云端 FDTD 验证中，器件已经表现出 clear wavelength-dependent output routing，而不再只是本地阵列因子模型的数学结果。虽然当前主输出集中度还不够理想，dominant output fraction 大约在 `0.33` 到 `0.38` 之间，但它已经可以作为“第二层证据”支持 simplified AWG 的工作机理。
+
+此外，本轮还对 proposal 里的 stretch goals 做了初步尝试：
+
+- `8-channel`：完成一轮 `8-output` layout 尝试，在 `1550 nm` 下主输出落在 `out_7`
+- `temperature dependence`：完成 `+40 K` 等效相位漂移测试，主输出从较高编号端口回移到较低编号端口
+- `lower crosstalk / insertion loss`：完成一轮 `array pitch / output pitch / output offset` 调整，发现优化配置下主输出集中度优于 baseline
+
+因此，stretch goals 虽然还没有形成完整的系统结果，但已经不再是“完全未做”，而是具备了第一轮独立的器件级尝试与可引用结果。
+
 ## Risks and Limitations
 
 当前阶段仍存在以下风险与限制：
