@@ -5,9 +5,9 @@
 在三周课程周期内，使用 Tidy3D 完成一个 C-band 4-channel AWG / wavelength demultiplexer 的设计与仿真流程。项目目标包括：
 
 - [x] 完成 silicon strip waveguide 的基础 MODE 分析，获得后续器件设计所需的基础参数
-- [ ] 建立简化版 4-channel AWG / demultiplexer 的设计参数与仿真流程
-- [ ] 分析 transmission spectrum、insertion loss、crosstalk、channel spacing 等关键性能指标
-- [ ] 完成项目报告与结果总结
+- [x] 建立简化版 4-channel AWG / demultiplexer 的设计参数与仿真流程
+- [x] 分析 transmission spectrum、insertion loss、crosstalk、channel spacing 等关键性能指标
+- [x] 完成项目报告与结果总结
 
 ## 当前已完成事项
 
@@ -35,7 +35,8 @@
 - [x] 已获得 AWG 初始设计可用的第一组 waveguide effective index 数据
 - [x] 已完成 width sweep / group index 提取
 - [x] 已具备 AWG 初始参数估算所需的基础 waveguide 数据
-- [ ] 尚未进入 AWG star coupler、arrayed waveguide length design、完整 demultiplexer 仿真阶段
+- [x] 已完成 AWG star coupler / arrayed waveguide length 的初步参数设计与简化频谱分析
+- [ ] 尚未完成高保真完整 demultiplexer FDTD 仿真
 
 当前项目进度可视为：已经完成从“环境搭建”到“基础波导 MODE 验证”以及“低成本参数扫描与结果整理”的阶段，下一步应进入“AWG 初始设计参数估算”阶段。
 
@@ -57,26 +58,26 @@
 - [x] 估算 arrayed waveguide 的 path length difference
 - [x] 搭建简化版 4-channel AWG / wavelength demultiplexer 几何结构的第一版参数草图
 - [x] 优先使用低成本方法检查几何与参数合理性
-- [ ] 在必要范围内进行器件级仿真验证
-- [ ] 记录不同设计参数对输出通道位置与谱线分离的影响
+- [x] 在必要范围内进行低成本器件级近似验证
+- [x] 记录不同设计参数对输出通道位置与谱线分离的影响
 
 ## Week 3 计划
 
-- [ ] 运行简化版 4-channel demultiplexer 的最终仿真
-- [ ] 提取 transmission spectrum
-- [ ] 计算或整理 insertion loss
-- [ ] 计算或整理 crosstalk
-- [ ] 检查 channel spacing 是否满足设计目标
-- [ ] 对结果做图表化展示与误差分析
-- [ ] 完成课程项目报告与最终汇报材料
+- [x] 运行简化版 4-channel demultiplexer 的最终频谱分析
+- [x] 提取 transmission spectrum
+- [x] 计算或整理 insertion loss
+- [x] 计算或整理 crosstalk
+- [x] 检查 channel spacing 是否满足设计目标
+- [x] 对结果做图表化展示与误差分析
+- [x] 完成课程项目报告与最终汇报材料
 
 ## 未来要做的事情
 
 - [x] 根据 width sweep 结果选定第一版 AWG 设计用的 waveguide width
 - [x] 确定 4-channel demux 的中心波长与 channel spacing
 - [x] 估算 free spectral range (FSR) 与 arrayed waveguide path length difference
-- [ ] 从单根 straight waveguide 过渡到简化器件级 demultiplexer 模型
-- [ ] 最后完成 transmission spectrum、insertion loss、crosstalk、channel spacing 的系统分析
+- [x] 从单根 straight waveguide 过渡到简化器件级 demultiplexer 模型
+- [x] 最后完成 transmission spectrum、insertion loss、crosstalk、channel spacing 的系统分析
 
 ## 本轮 width sweep 结果摘要
 
@@ -114,7 +115,7 @@
 - [x] 已完成的基础 MODE 仿真（低 credit 消耗）
 - [x] 已完成的 waveguide width MODE sweep（低 credit 消耗）
 - [ ] 后续如进行 group index 相关 MODE 扫描（低到中等 credit 消耗，取决于扫描数量）
-- [ ] AWG / demultiplexer 的 FDTD 或器件级云端仿真（相对更高 credit 消耗）
+- [ ] AWG / demultiplexer 的 FDTD 或器件级云端仿真（相对更高 credit 消耗，如需继续提高结果保真度）
 
 ### 不会消耗 Tidy3D credit 的任务
 
@@ -122,12 +123,28 @@
 - [x] 本地撰写项目计划与进度报告
 - [x] 本地 CSV 后处理
 - [x] 本地绘制 `n_eff vs waveguide width` 图
-- [ ] 本地计算 insertion loss、crosstalk、channel spacing
-- [ ] 本地撰写最终报告与汇报材料
+- [x] 本地计算 insertion loss、crosstalk、channel spacing
+- [x] 本地撰写最终报告与汇报材料
 
 ## 下一步优先任务
 
-- [ ] 基于 `simplified_awg_geometry.ipynb` 决定是否需要调整 FPR length、array pitch、output pitch
-- [ ] 为 simplified AWG 选择第一版器件仿真策略：继续低成本近似，或进入小规模云端验证
-- [ ] 为后续 transmission spectrum 提取预留输出端口定义和命名规范
-- [ ] 在保证 credit 可控的前提下，准备第一版 simplified demultiplexer 仿真
+- [x] 基于 `simplified_awg_geometry.ipynb` 决定是否需要调整 FPR length、array pitch、output pitch
+- [x] 为 simplified AWG 选择第一版器件仿真策略：继续低成本近似，完成本地频谱分析
+- [x] 为后续 transmission spectrum 提取预留输出端口定义和命名规范
+- [x] 在保证 credit 可控的前提下，准备第一版 simplified demultiplexer 仿真
+
+## 本周最终收尾结果
+
+- [x] 新增 `awg_spectral_analysis.py`，基于已有 MODE 与 AWG 参数生成简化版 transmission spectrum
+- [x] 生成 `awg_simplified_spectrum.csv`
+- [x] 生成 `awg_channel_metrics.csv`
+- [x] 生成 `report_assets/awg_transmission_spectra.png`
+- [x] 生成 `report_assets/awg_channel_metrics.png`
+- [x] 生成 `AWG_FINAL_RESULTS.md`
+- [x] 生成 `EE588_AWG_Final_Project_Report.docx`
+
+## 结果说明
+
+- [x] 当前最终结果采用的是“基于已有 Tidy3D MODE 数据的本地简化 AWG 频谱模型”
+- [x] 该结果适合课程项目的第一版最终提交与结果总结
+- [ ] 该结果仍不是完整高保真 Tidy3D FDTD 器件仿真，如后续还有时间，可继续补充

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>EE588 Final Project Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #000000;
+      margin: 0 auto;
+      width: 6.5in;
+    }
+    h1.title {
+      font-size: 24pt;
+      font-weight: normal;
+      text-align: center;
+      margin: 0 0 4pt 0;
+    }
+    h2 {
+      font-size: 16pt;
+      font-weight: normal;
+      margin: 18pt 0 6pt 0;
+    }
+    p {
+      margin: 0 0 8pt 0;
+    }
+    p.meta {
+      text-align: center;
+      color: #555555;
+      margin: 0 0 6pt 0;
+    }
+    ul {
+      margin: 0 0 8pt 24pt;
+      padding-left: 18pt;
+    }
+    li {
+      margin-bottom: 4pt;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8pt 0 12pt 0;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid #d0d7de;
+      padding: 6pt 8pt;
+      vertical-align: middle;
+      word-wrap: break-word;
+      text-align: center;
+    }
+    th {
+      background: #f2f4f7;
+      font-weight: bold;
+    }
+    .figure {
+      margin: 12pt 0 14pt 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+    .figure img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #e5e7eb;
+    }
+    .caption {
+      font-size: 10pt;
+      color: #555555;
+      margin-top: 4pt;
+    }
+  </style>
+</head>
+<body>
+<h1 class="title">EE588 Final Project Report</h1><p class="meta">C-band 4-Channel AWG / Wavelength Demultiplexer Design Using Tidy3D</p><p class="meta">Date: 2026-05-26</p><h2>1. Objective</h2><p>This report consolidates the full three-week project workflow, from silicon strip waveguide MODE analysis to a first-pass 4-channel AWG design and a final low-cost spectral evaluation.</p><h2>2. Workflow Summary</h2><ul><li>Week 1 established the baseline 500 nm x 220 nm silicon strip waveguide MODE solution and verified the fundamental TE-like guided mode.</li><li>Week 1 also completed a width sweep from 0.40 um to 0.60 um, producing the effective-index and group-index data used for AWG design.</li><li>Week 2 translated the MODE data into a 4-channel C-band AWG parameter set, including channel plan, FSR, diffraction order, and array path-length ladder.</li><li>Week 3 completed a simplified local spectrum analysis using the derived AWG parameters, yielding transmission, insertion-loss, crosstalk, and channel-spacing estimates.</li></ul><h2>3. Baseline Waveguide Result</h2><table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr><td>Waveguide width</td><td>0.50 um</td></tr>
+<tr><td>Waveguide height</td><td>0.22 um</td></tr>
+<tr><td>Reference wavelength</td><td>1550 nm</td></tr>
+<tr><td>Fundamental mode n_eff</td><td>2.4446</td></tr>
+<tr><td>Fundamental mode n_group</td><td>4.0512</td></tr></tbody></table><div class="figure"><img src="neff_vs_width.png" alt="Width sweep result used to select the 0.50 um baseline." /><div class="caption">Width sweep result used to select the 0.50 um baseline.</div></div><h2>4. First-Pass AWG Design</h2><table><thead><tr><th>Parameter</th><th>Value</th><th>Unit</th></tr></thead><tbody><tr><td>Channel count</td><td>4</td><td>count</td></tr>
+<tr><td>Center wavelength</td><td>1550</td><td>nm</td></tr>
+<tr><td>Channel spacing</td><td>1.6</td><td>nm</td></tr>
+<tr><td>Target FSR</td><td>19.2</td><td>nm</td></tr>
+<tr><td>Actual FSR</td><td>19.1358</td><td>nm</td></tr>
+<tr><td>AWG order</td><td>81</td><td>dimensionless</td></tr>
+<tr><td>Path length difference</td><td>30.9907</td><td>um</td></tr>
+<tr><td>Arrayed waveguides</td><td>16</td><td>count</td></tr></tbody></table><table><thead><tr><th>Channel</th><th>Center Wavelength (nm)</th><th>Center Frequency (THz)</th></tr></thead><tbody><tr><td>1</td><td>1547.6</td><td>193.7144</td></tr>
+<tr><td>2</td><td>1549.2</td><td>193.5144</td></tr>
+<tr><td>3</td><td>1550.8</td><td>193.3147</td></tr>
+<tr><td>4</td><td>1552.4</td><td>193.1155</td></tr></tbody></table><div class="figure"><img src="simplified_awg_geometry_layout.png" alt="First-pass simplified AWG geometry preview." /><div class="caption">First-pass simplified AWG geometry preview.</div></div><h2>5. Final Simplified Spectral Evaluation</h2><p>Because full device-level FDTD validation would consume substantially more Tidy3D credits, the final project stage uses a local array-factor approximation driven by the already extracted MODE parameters and AWG geometry design values.</p><p>This means the final spectra below should be interpreted as a system-level first-pass estimate rather than a claim of fully converged electromagnetic device performance.</p><div class="figure"><img src="awg_transmission_spectra.png" alt="Simplified transmission spectra for the four output channels." /><div class="caption">Simplified transmission spectra for the four output channels.</div></div><div class="figure"><img src="awg_channel_metrics.png" alt="Insertion loss, worst-case crosstalk, and 3 dB bandwidth by channel." /><div class="caption">Insertion loss, worst-case crosstalk, and 3 dB bandwidth by channel.</div></div><table><thead><tr><th>Channel</th><th>Target (nm)</th><th>Peak (nm)</th><th>Insertion Loss (dB)</th><th>Worst Crosstalk (dB)</th><th>3 dB BW (nm)</th></tr></thead><tbody><tr><td>1</td><td>1547.6</td><td>1547.6</td><td>3</td><td>-13.71</td><td>1.06</td></tr>
+<tr><td>2</td><td>1549.2</td><td>1549.2</td><td>3</td><td>-13.71</td><td>1.06</td></tr>
+<tr><td>3</td><td>1550.8</td><td>1550.8</td><td>3</td><td>-13.71</td><td>1.06</td></tr>
+<tr><td>4</td><td>1552.4</td><td>1552.4</td><td>3</td><td>-13.71</td><td>1.06</td></tr></tbody></table><h2>6. Key Final Results</h2><ul><li>The average adjacent channel spacing is 1.6 nm, which matches the 1.6 nm design target.</li><li>The average insertion loss in the simplified model is 3 dB.</li><li>The worst-case crosstalk in the simplified model is -13.71 dB.</li><li>The average 3 dB channel bandwidth is 1.06 nm.</li><li>All four channel peaks remain aligned with the intended center wavelengths in the simplified analysis output.</li></ul><h2>7. Conclusion</h2><p>The project successfully progressed from low-cost single-waveguide MODE analysis to a reportable 4-channel C-band AWG design flow. The resulting parameter set is internally consistent, produces the intended channel spacing, and supports a coherent final submission package.</p><p>The main remaining improvement path is clear: a future iteration should replace the local spectral approximation with one or more device-level Tidy3D simulations to refine insertion loss, passband shape, and crosstalk with higher physical fidelity.</p>
+</body>
+</html>

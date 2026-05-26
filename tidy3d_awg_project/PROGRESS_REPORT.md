@@ -109,6 +109,31 @@ First-pass simplified geometry parameters:
 
 完成这一阶段后，就可以更有依据地进入简化版 AWG / demultiplexer 的结构设计与仿真。
 
+## Final Week Update
+
+本周已经把项目从“参数草图阶段”推进到了“可提交的最终结果包阶段”。考虑到课程时间和 Tidy3D credit 成本，本轮没有直接进行高成本完整 FDTD 器件仿真，而是基于已经完成的 MODE 数据、AWG 初始参数和阵列长度设计，补充完成了一个本地 simplified AWG spectrum analysis workflow。
+
+这一轮新增的最终分析内容包括：
+
+- 生成 `awg_simplified_spectrum.csv`
+- 生成 `awg_channel_metrics.csv`
+- 生成 `report_assets/awg_transmission_spectra.png`
+- 生成 `report_assets/awg_channel_metrics.png`
+- 生成 `AWG_FINAL_RESULTS.md`
+- 生成 `EE588_AWG_Final_Project_Report.docx`
+
+在该 simplified 分析中，4 个输出通道的峰值波长分别对准 `1547.6, 1549.2, 1550.8, 1552.4 nm`，与目标 channel plan 一致。平均相邻通道 spacing 为 `1.6 nm`，与设计目标一致。使用当前的低成本阵列因子近似模型，得到的平均 insertion loss 约为 `3.0 dB`，worst-case crosstalk 约为 `-13.7 dB`，平均 `3 dB` bandwidth 约为 `1.06 nm`。
+
+这意味着目前项目已经具备一套完整且自洽的提交材料链条：
+
+- 有 straight waveguide 的 MODE 基础结果
+- 有 width sweep 与 `n_eff / n_group` 数据
+- 有 AWG 初始参数与 simplified geometry
+- 有 transmission spectrum、insertion loss、crosstalk、channel spacing 的最终整理结果
+- 有最终项目报告文档
+
+因此，从课程项目提交角度看，当前版本已经可以作为一套完整的 final submission。后续如果还有额外时间，最优先的增强方向仍然是补做一次或少量几次更高保真的 Tidy3D 器件级仿真，用于进一步验证 passband 形状、插损与串扰。
+
 ## Risks and Limitations
 
 当前阶段仍存在以下风险与限制：
