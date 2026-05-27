@@ -50,17 +50,61 @@ GLOBAL_RESULTS_CSV = ROOT / "results" / "tables" / "awg_hf_global_optimization_r
 GLOBAL_SUMMARY_MD = ROOT / "docs" / "AWG_HF_GLOBAL_OPTIMIZATION_SUMMARY.md"
 GLOBAL_SCAN_PNG = ASSETS / "awg_hf_global_optimization_scan.png"
 GLOBAL_VERIFY_PNG = ASSETS / "awg_hf_global_optimization_channels.png"
+COARSE_RESULTS_CSV = ROOT / "results" / "tables" / "awg_coarse_to_fine_candidates.csv"
 GLOBAL_MAX_ESTIMATED_CREDITS = 1.8
+COARSE_TOP_K = 5
 
 
 def candidate_configs() -> list[dict[str, float | str]]:
-    return [
+    fallback = [
         {"label": "globscan_a", "array_pitch_um": 1.25, "output_pitch_um": 1.65, "output_offset_um": 0.50},
         {"label": "globscan_b", "array_pitch_um": 1.25, "output_pitch_um": 1.60, "output_offset_um": 0.55},
         {"label": "globscan_c", "array_pitch_um": 1.20, "output_pitch_um": 1.55, "output_offset_um": 0.55},
         {"label": "globscan_d", "array_pitch_um": 1.15, "output_pitch_um": 1.55, "output_offset_um": 0.60},
         {"label": "globscan_e", "array_pitch_um": 1.15, "output_pitch_um": 1.60, "output_offset_um": 0.65},
     ]
+    if not COARSE_RESULTS_CSV.exists():
+        return fallback
+
+    coarse_df = pd.read_csv(COARSE_RESULTS_CSV)
+    summary_rows = []
+    for cfg_label, cfg_df in coarse_df.groupby("config_label"):
+        summary_rows.append(
+            {
+                "label": cfg_label.replace("coarse_", "globscan_"),
+                "array_pitch_um": float(cfg_df["array_pitch_um"].iloc[0]),
+                "output_pitch_um": float(cfg_df["output_pitch_um"].iloc[0]),
+                "output_offset_um": float(cfg_df["output_offset_um"].iloc[0]),
+                "coarse_score": float(cfg_df["coarse_score"].iloc[0]),
+            }
+        )
+
+    ranked = sorted(summary_rows, key=lambda item: item["coarse_score"], reverse=True)
+    shortlisted = []
+    seen_keys: set[tuple[float, float, float]] = set()
+    for row in ranked:
+        key = (
+            round(float(row["array_pitch_um"]), 6),
+            round(float(row["output_pitch_um"]), 6),
+            round(float(row["output_offset_um"]), 6),
+        )
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        shortlisted.append(row)
+        if len(shortlisted) >= COARSE_TOP_K:
+            break
+    if shortlisted:
+        return [
+            {
+                "label": str(row["label"]),
+                "array_pitch_um": float(row["array_pitch_um"]),
+                "output_pitch_um": float(row["output_pitch_um"]),
+                "output_offset_um": float(row["output_offset_um"]),
+            }
+            for row in shortlisted
+        ]
+    return fallback
 
 
 def global_score(avg_dom: float, avg_s2f: float, min_dom: float, max_s2f: float) -> float:
