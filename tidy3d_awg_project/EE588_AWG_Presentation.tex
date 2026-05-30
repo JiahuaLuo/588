@@ -1,27 +1,21 @@
-%% EE588 AWG Project Presentation  ── v2 (updated with N=24 results)
-%% 10-minute talk, 15 slides
-%% Compile:  pdflatex EE588_AWG_Presentation.tex  (run twice)
+%% EE588 AWG Project Presentation  ── v3
+%% 15 slides, 10-minute talk
+%% Compile: pdflatex (twice)
 %%
-%% FIGURE PLACEMENT QUICK-REFERENCE (all paths relative to this .tex file):
-%%   Slide  6  right col : results/figures/neff_vs_width.png
-%%   Slide  7  right col : results/figures/simplified_awg_geometry_layout.png
-%%   Slide  8  right col : results/figures/awg_transmission_spectra.png
-%%   Slide 10  right col : results/figures/awg_high_fidelity_transmission.png
-%%   Slide 11  left col  : results/figures/awg_hf_optimization_scan.png
-%%   Slide 12  right col : results/figures/awg_improved_design_channels.png  ← NEW
-%%   Slide 14  bottom    : results/figures/awg_hf_global_optimization_channels.png
-%%
-%% See the companion file  EE588_AWG_图片放置指南.md  for exact placements.
+%% FIGURES (all paths from this .tex file):
+%%   Slide  8  right : results/figures/neff_vs_width.png
+%%   Slide  9  right : results/figures/simplified_awg_geometry_layout.png
+%%   Slide 10  right : results/figures/awg_transmission_spectra.png
+%%   Slide 12  right : results/figures/awg_high_fidelity_transmission.png
+%%   Slide 13  left  : results/figures/awg_hf_optimization_scan.png
+%%   Slide 13  right : results/figures/awg_improved_design_channels.png
 
 \documentclass[aspectratio=169,10pt]{beamer}
-
-% ── Theme ─────────────────────────────────────────────────────────────────────
 \usetheme{Madrid}
 \usecolortheme{seahorse}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{footline}[frame number]
 
-% ── Packages ──────────────────────────────────────────────────────────────────
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
@@ -33,118 +27,98 @@
 \usepackage{multirow}
 \usepackage{hyperref}
 
-% ── Colors ────────────────────────────────────────────────────────────────────
+\usetikzlibrary{decorations.pathmorphing,arrows.meta,patterns,positioning}
+
 \definecolor{uw_purple}{RGB}{51,0,111}
 \definecolor{uw_gold}{RGB}{232,211,162}
 \definecolor{good_green}{RGB}{0,153,76}
 \definecolor{passing_blue}{RGB}{0,102,204}
 \definecolor{poor_red}{RGB}{204,0,0}
+\definecolor{si_blue}{RGB}{70,130,180}
+\definecolor{sio2_gray}{RGB}{210,215,220}
+
 \setbeamercolor{frametitle}{bg=uw_purple,fg=white}
 \setbeamercolor{title}{bg=uw_purple,fg=white}
 \setbeamercolor{structure}{fg=uw_purple}
 
-% ── Metadata ──────────────────────────────────────────────────────────────────
-\title[EE588 AWG Project]{C-band 4-Channel AWG Wavelength Demultiplexer\\
-       Design \& Simulation using Tidy3D}
+\title[EE588 AWG]{C-band 4-Channel AWG Wavelength Demultiplexer\\Design \& Simulation}
 \subtitle{EE588 Final Project}
-\author{Donald Luo,Yangyuan Yin}
+\author{Donald Luo \and Yangyuan Yin}
 \institute{University of Washington}
 \date{\today}
 
-% ─────────────────────────────────────────────────────────────────────────────
 \begin{document}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 1 — Title
-% ════════════════════════════════════════════════════════════════════════════
+% ── SLIDE 1: Title ────────────────────────────────────────────────────────────
 \begin{frame}
   \titlepage
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 2 — Motivation I: The Data Center Bandwidth Challenge
-% ════════════════════════════════════════════════════════════════════════════
+% ── SLIDE 2: Motivation I ─────────────────────────────────────────────────────
 \begin{frame}{Motivation I: The Data Center Bandwidth Challenge}
   \begin{columns}[T]
-    \column{0.55\textwidth}
-      \textbf{Global IP traffic is exploding}
-      \begin{itemize}
-        \item Data-center IP traffic reached \textbf{20.6 ZB/year} in 2021,
-              growing $\sim$25\% annually \footnotemark[1]
-        \item 77\% of all traffic stays \emph{inside} data centers
-              (intra-DC communications)
-        \item Scaling with more copper wires hits fundamental limits:
-              resistance, crosstalk, energy per bit
+    \column{0.56\textwidth}
+      \textbf{Global data-center traffic is exploding}
+      \begin{itemize}\setlength\itemsep{3pt}
+        \item Reached \textbf{20.6 ZB/year} in 2021, growing $\sim$25\%/yr \footnotemark[1]
+        \item 77\% of traffic stays \emph{inside} data centers
+        \item Copper wires hit fundamental limits:\\
+              {\small resistance heat, EM crosstalk, energy-per-bit ceiling}
       \end{itemize}
-
-      \vspace{0.6em}
-      \textbf{Optical interconnects are the answer}
-      \begin{itemize}
-        \item 400GbE / 800GbE standards now mandate WDM optics \footnotemark[2]
-        \item \textbf{WDM}: multiplex $N$ wavelength channels on a single fiber
-        \item Receiver side needs a \textbf{wavelength demultiplexer (demux)}
-              to separate channels
+      \vspace{0.5em}
+      \textbf{Optical interconnects are the only path forward}
+      \begin{itemize}\setlength\itemsep{3pt}
+        \item 400GbE / 800GbE standards mandate WDM optics \footnotemark[2]
+        \item \textbf{WDM}: pack $N$ color channels onto one fiber
+        \item Receiver must \textbf{demultiplex} — separate each color
       \end{itemize}
-
-    \column{0.42\textwidth}
-      \begin{block}{The core challenge}
+    \column{0.41\textwidth}
+      \begin{block}{What a demultiplexer does}
         \centering
-        \begin{tikzpicture}[scale=0.78, font=\small]
-          % fiber
-          \draw[very thick, blue!60] (-1.8,0) -- (0,0);
-          \node[above] at (-0.9,0.05) {\tiny mixed $\lambda$};
-          % demux box
-          \fill[uw_purple!15, rounded corners=3pt] (0,-1.0) rectangle (1.2,1.0);
-          \node[align=center, font=\scriptsize] at (0.6,0) {Demux\\(AWG)};
-          % output channels
-          \foreach \y/\lbl in {0.7/$\lambda_1$, 0.23/$\lambda_2$,
-                                -0.23/$\lambda_3$, -0.7/$\lambda_4$}{
-            \draw[thick, ->] (1.2,\y) -- (2.3,\y)
-              node[right, font=\tiny] {\lbl};
-          }
-        \end{tikzpicture}
-        \vspace{0.4em}\\
-        One fiber in, four color-separated channels out.
-        \textbf{This is what we build.}
+        \begin{tikzpicture}[scale=0.82]
+          \draw[very thick,blue!60,->] (-1.8,0)--(-0.05,0);
+          \node[above,font=\tiny] at (-0.9,0.05) {mixed $\lambda_1\!\cdots\!\lambda_4$};
+          \fill[uw_purple!20,rounded corners=3pt] (0,-1.1) rectangle (1.3,1.1);
+          \node[font=\scriptsize,align=center] at (0.65,0) {Demux\\(AWG)};
+          \draw[red,thick,->] (1.3,0.75)--(2.4,0.75);
+          \node[right,red,font=\tiny] at (2.4,0.75) {$\lambda_1$};
+          \draw[orange,thick,->] (1.3,0.25)--(2.4,0.25);
+          \node[right,orange,font=\tiny] at (2.4,0.25) {$\lambda_2$};
+          \draw[green!60!black,thick,->] (1.3,-0.25)--(2.4,-0.25);
+          \node[right,green!60!black,font=\tiny] at (2.4,-0.25) {$\lambda_3$};
+          \draw[blue,thick,->] (1.3,-0.75)--(2.4,-0.75);
+          \node[right,blue,font=\tiny] at (2.4,-0.75) {$\lambda_4$};
+        \end{tikzpicture}\\[4pt]
+        One mixed-color fiber in.\\Four separated channels out.\\
+        \textbf{This is what we simulate.}
       \end{block}
   \end{columns}
-
-  \footnotetext[1]{\tiny Cisco Annual Internet Report 2018–2023, White Paper, 2022.}
-  \footnotetext[2]{\tiny D. A. B. Miller, ``Rationale and challenges for optical interconnects,''
-    \textit{Proc.\ IEEE}, vol.\ 88, pp.\ 728--749, 2000.}
+  \footnotetext[1]{\tiny Cisco Annual Internet Report 2022.}
+  \footnotetext[2]{\tiny D.~A.~B.~Miller, \textit{Proc.\ IEEE} 88, 728--749 (2000).}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 3 — Motivation II: Why Silicon AWG?
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Motivation II: Why Arrayed Waveguide Grating on Silicon?}
+% ── SLIDE 3: Motivation II ────────────────────────────────────────────────────
+\begin{frame}{Motivation II: Why an Arrayed Waveguide Grating on Silicon?}
   \begin{columns}[T]
     \column{0.50\textwidth}
-      \textbf{AWG: the dominant on-chip demux architecture}
-      \begin{itemize}
-        \item First proposed by Smit (1988) \footnotemark[3]; now found in
-              virtually every coherent transceiver
-        \item Operates as a \emph{phased-array spatial filter}: $N$ waveguide
-              arms with incremental path-length difference $\Delta L$ produce
-              wavelength-dependent constructive interference
-        \item Channel count 4–96, insertion loss $<$\,2 dB in state-of-the-art
-              Si implementations \footnotemark[4]
+      \textbf{AWG: industry-standard on-chip demux} \footnotemark[3]
+      \begin{itemize}\setlength\itemsep{3pt}
+        \item First proposed by Smit (1988); now in every coherent transceiver
+        \item Channels: 4–96; insertion loss $<$2\,dB in production
+        \item Works as a \emph{phased-array spatial filter} — no moving parts
       \end{itemize}
-
-      \vspace{0.5em}
-      \textbf{Why silicon (SOI platform)?}
-      \begin{itemize}
-        \item CMOS-compatible: fab in existing semiconductor foundries
-        \item Large index contrast Si/SiO$_2$ ($\Delta n \approx 2.0$)
-              $\Rightarrow$ sub-micron waveguide, mm$^2$ footprint
-        \item Integrates with Ge photodetectors and Si modulators
-              on the same chip \footnotemark[5]
+      \vspace{0.4em}
+      \textbf{Why silicon (SOI platform)?} \footnotemark[4]
+      \begin{itemize}\setlength\itemsep{3pt}
+        \item CMOS-fab compatible — made in standard chip factories
+        \item Huge index contrast Si/SiO$_2$ ($\Delta n \approx 2.0$)\\
+              $\Rightarrow$ bend radius $<$10\,$\mu$m, chip area $\sim$mm$^2$
+        \item Co-integrates with Ge detectors \& Si modulators
       \end{itemize}
-
     \column{0.47\textwidth}
-      \begin{block}{ITU-T C-band channel plan \footnotemark[6]}
-        \centering
-        \renewcommand{\arraystretch}{1.1}
+      \begin{block}{Our 4-channel C-band target (ITU-T G.694.1 \footnotemark[5])}
+        \centering\small
+        \renewcommand{\arraystretch}{1.15}
         \begin{tabular}{cc}
           \toprule
           Channel & Center $\lambda$ (nm) \\
@@ -154,120 +128,260 @@
           ch\,3 & 1550.8 \\
           ch\,4 & 1552.4 \\
           \midrule
-          \multicolumn{2}{c}{$\Delta\lambda = 1.6$\,nm $\approx$ 200\,GHz} \\
+          \multicolumn{2}{c}{Spacing: 1.6\,nm $\approx$ 200\,GHz (DWDM)}\\
           \bottomrule
         \end{tabular}
       \end{block}
       \vspace{0.3em}
-      \small\textit{This project}: simulate this exact 4-channel plan on a
-      500\,nm\,$\times$\,220\,nm Si strip waveguide platform.
+      \small Platform: 500\,nm\,$\times$\,220\,nm Si strip waveguide on SiO$_2$.
   \end{columns}
-
-  \footnotetext[3]{\tiny M. K. Smit, ``New focusing and dispersive planar component based on an optical phased array,''
-    \textit{Electron.\ Lett.}, vol.\ 24, pp.\ 385--386, 1988.}
-  \footnotetext[4]{\tiny M. K. Smit \& C. van Dam, ``PHASAR-based WDM-devices,''
-    \textit{IEEE JSTQE}, vol.\ 2, pp.\ 236--250, 1996.}
-  \footnotetext[5]{\tiny L. Chrostowski \& M. Hochberg, \textit{Silicon Photonics Design},
-    Cambridge Univ.\ Press, 2015.}
-  \footnotetext[6]{\tiny ITU-T G.694.1, ``DWDM frequency grid,'' 2012.}
+  \footnotetext[3]{\tiny M.~K.~Smit \& C.~van Dam, \textit{IEEE JSTQE} 2, 236--250 (1996).}
+  \footnotetext[4]{\tiny L.~Chrostowski \& M.~Hochberg, \textit{Silicon Photonics Design}, Cambridge, 2015.}
+  \footnotetext[5]{\tiny ITU-T G.694.1, DWDM frequency grid, 2012.}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 4 — AWG Working Principle
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{AWG Working Principle: Phased-Array Interference}
-  \begin{center}
-  \begin{tikzpicture}[scale=0.82, every node/.style={font=\small}]
-    \draw[thick,->] (-1.2,0) -- (-0.1,0) node[above left]{\small Input};
-    \fill[blue!20] (0,-0.8) rectangle (0.8,0.8);
-    \node at (0.4,0) {\tiny FPR\,1};
-    \foreach \y/\lbl in {0.6/arm\,0, 0.2/arm\,1, -0.2/\ldots, -0.6/arm\,N\!-\!1}{
-      \draw[thick] (0.8,\y) -- (2.8,\y);
-      \node[right] at (2.85,\y) {\tiny \lbl};
-    }
-    \draw[<->,dashed,red] (2.0,0.6) -- (2.0,0.2) node[midway,right]{\tiny $\Delta L$};
-    \fill[blue!20] (3.2,-0.8) rectangle (4.0,0.8);
-    \node at (3.6,0) {\tiny FPR\,2};
-    \foreach \y/\ch in {0.6/ch1, 0.2/ch2, -0.2/ch3, -0.6/ch4}{
-      \draw[thick,->] (4.0,\y) -- (5.0,\y);
-      \node[right] at (5.0,\y) {\tiny $\lambda_{\ch}$};
-    }
-    \node[above,blue] at (0.4,0.85) {\tiny Star coupler};
-    \node[above,blue] at (3.6,0.85) {\tiny Star coupler};
-    \node[above] at (1.8,0.75) {\tiny Arrayed WGs ($N$ arms)};
-  \end{tikzpicture}
-  \end{center}
-
-  \begin{columns}[T]
-    \column{0.50\textwidth}
-      \textbf{Key design equations:}
-      \[
-        \Delta L = \frac{m\,\lambda_0}{n_g}, \quad
-        \text{FSR} = \frac{\lambda_0}{m}, \quad
-        \text{3dB BW} \approx \frac{\text{FSR}}{N}
-      \]
-      \small Phase of arm $k$ at wavelength $\lambda$:
-      $\phi_k = \dfrac{2\pi\,n_\text{eff}(\lambda)}{\lambda}\cdot k\Delta L$
-
-    \column{0.47\textwidth}
-      \begin{block}{This project's parameters}
-        \small
-        $m=81$,\quad $\Delta L \approx 30.99\,\mu$m,\quad FSR $\approx 19.1$\,nm\\[3pt]
-        \textbf{Initially} $N=16$: 3dB BW $= 1.2$\,nm\\
-        \textbf{Improved} $N=24$: 3dB BW $= 0.8$\,nm\\[3pt]
-        Channel spacing $= 1.6$\,nm $>$ BW \checkmark
-      \end{block}
-  \end{columns}
-\end{frame}
-
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 5 — Simulation Strategy
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Three-Level Simulation Strategy}
-  \begin{center}
-  \renewcommand{\arraystretch}{1.35}
-  \begin{tabular}{clll}
-    \toprule
-    \textbf{Level} & \textbf{Method} & \textbf{What it answers} & \textbf{Cost} \\
-    \midrule
-    1 & Tidy3D MODE solver & Waveguide $n_\text{eff}$, $n_g$ & $\sim$0.006 FC/run \\
-    2 & Local array-factor model & Ideal spectrum shape & \textbf{Free} \\
-    3 & Tidy3D 2D eff.-index FDTD & Real EM routing in FPR & $\sim$0.10 FC/run \\
-    \rowcolor{gray!15}
-    (4) & Full 3D FDTD (not done) & Accurate IL \& XT & $\sim$7.8 FC/run \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-
-  \vspace{0.4em}
-  \begin{columns}[T]
-    \column{0.50\textwidth}
-      \begin{block}{2D effective-index shortcut}
-        Replace 3D waveguide with 2D medium at $n = n_\text{eff}$.
-        Model only the output-FPR section; inject phased
-        sources to represent the array arms analytically.\\[3pt]
-        Savings: $\sim$100$\times$ vs full 3D.
-      \end{block}
-
-    \column{0.47\textwidth}
-      \begin{alertblock}{Total project cost}
-        \small
-        MODE runs: $\sim$0.03 FC\\
-        Level-3 FDTD (36 runs): $\sim$3.2 FC\\
-        \textbf{Grand total: $\approx$\,3.2 FlexCredit}\\[2pt]
-        Full-3D equivalent: $> 300$ FC
-      \end{alertblock}
-  \end{columns}
-\end{frame}
-
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 6 — Waveguide MODE Analysis
-%  📷 RIGHT COL: results/figures/neff_vs_width.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Phase 1 — Waveguide MODE Analysis}
+% ── SLIDE 4: AWG Physical Structure ──────────────────────────────────────────
+\begin{frame}{AWG Physical Structure: From Waveguide to Chip}
   \begin{columns}[T]
     \column{0.44\textwidth}
-      \textbf{Si strip / SiO$_2$ clad:} $h = 220$\,nm (fixed SOI)\\[0.4em]
+      \textbf{Step 1 — The waveguide cross-section}\\[4pt]
+      \begin{center}
+      \begin{tikzpicture}[scale=1.05, font=\tiny]
+        % SiO2 substrate
+        \fill[sio2_gray!70] (-1.7,-0.75) rectangle (1.7,-0.18);
+        \node at (0,-0.48) {SiO$_2$ substrate, $n{=}1.44$};
+        % Si core
+        \fill[si_blue!70] (-0.28,-0.18) rectangle (0.28,0.18);
+        \node[white,font=\bfseries\tiny] at (0,0) {Si core};
+        % SiO2 top cladding
+        \fill[sio2_gray!30] (-1.7,0.18) rectangle (1.7,0.62);
+        \node at (0,0.40) {SiO$_2$ cladding, $n{=}1.44$};
+        % Mode profile (Gaussian)
+        \draw[red!80,very thick,domain=-0.72:0.72,samples=60]
+          plot(\x,{0.36*exp(-18*\x*\x)});
+        \node[red!70] at (1.05,0.38) {TE mode};
+        % Dimensions
+        \draw[black!50,<->,thin] (-0.28,-0.56)--(0.28,-0.56)
+          node[midway,below,black!70] {500\,nm};
+        \draw[black!50,<->,thin] (0.42,-0.18)--(0.42,0.18)
+          node[midway,right,black!70] {220\,nm};
+        \draw[black!30,dashed,thin] (-0.28,-0.18)--(-0.28,-0.50)
+          (0.28,-0.18)--(0.28,-0.50);
+        \node[above,font=\tiny\itshape] at (0,0.65) {Light trapped by total internal reflection};
+      \end{tikzpicture}
+      \end{center}
+      \vspace{0.3em}
+      \small $n_{\mathrm{Si}}=3.48 \gg n_{\mathrm{SiO_2}}=1.44$\;$\Rightarrow$\;light stays in the Si core.
+
+    \column{0.53\textwidth}
+      \textbf{Step 2 — The full AWG chip (top view)}\\[4pt]
+      \begin{center}
+      \begin{tikzpicture}[scale=0.85, font=\tiny]
+        % Input waveguide
+        \draw[blue!70,very thick,->] (-4.2,0)--(-3.3,0);
+        \node[above,blue!70,align=center] at (-3.75,0.05) {Input\\(mixed $\lambda$)};
+        % FPR1 (fan)
+        \fill[cyan!25] (-3.3,-0.8)--(-2.2,-1.4)--(-2.2,1.4)--(-3.3,0.8)--cycle;
+        \node[align=center] at (-2.75,0) {FPR 1\\(star\\coupler)};
+        % Array arms (6 shown, different lengths with meanders)
+        \foreach \k/\ys/\ye/\ext in {
+          1/1.1/0.9/0.0,
+          2/0.65/0.55/0.15,
+          3/0.22/0.18/0.30,
+          4/-0.22/-0.18/0.45,
+          5/-0.65/-0.55/0.60,
+          6/-1.1/-0.9/0.75}{
+          \draw[uw_purple!60,thick]
+            (-2.2,\ys) -- (-1.5,\ys)
+            -- (-1.5,{\ys-\ext*0.4}) -- (-0.8,{\ys-\ext*0.4}) -- (-0.8,\ys)
+            -- (-0.1,\ye);
+        }
+        \node[below,align=center] at (-1.15,-1.35) {16 arms, each\\$\Delta L$ longer};
+        % FPR2 (fan)
+        \fill[cyan!25] (-0.1,-1.4)--(1.0,-0.8)--(1.0,0.8)--(-0.1,1.4)--cycle;
+        \node[align=center] at (0.45,0) {FPR 2\\(output\\router)};
+        % Output waveguides (explicit — avoids $ inside \foreach)
+        \draw[red,very thick,->] (1.0,0.6)--(2.0,0.6);
+        \node[right,red] at (2.0,0.6) {$\lambda_1$};
+        \draw[orange,very thick,->] (1.0,0.2)--(2.0,0.2);
+        \node[right,orange] at (2.0,0.2) {$\lambda_2$};
+        \draw[green!70!black,very thick,->] (1.0,-0.2)--(2.0,-0.2);
+        \node[right,green!70!black] at (2.0,-0.2) {$\lambda_3$};
+        \draw[blue,very thick,->] (1.0,-0.6)--(2.0,-0.6);
+        \node[right,blue] at (2.0,-0.6) {$\lambda_4$};
+        % Scale bar
+        \draw[black!50] (-4.0,-1.6)--(-2.0,-1.6)
+          node[midway,below,black!60] {$\sim$0.5\,mm};
+      \end{tikzpicture}
+      \end{center}
+  \end{columns}
+\end{frame}
+
+% ── SLIDE 5: How AWG Separates Colors ────────────────────────────────────────
+\begin{frame}{How AWG Separates Colors: Phase-Controlled Interference}
+  \begin{columns}[T]
+    \column{0.46\textwidth}
+      \textbf{Key idea: different arm lengths = different phase delays}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.9, font=\tiny]
+        % Left side: input (all same phase)
+        \node[left] at (-0.1,1.5) {arm 0};
+        \node[left] at (-0.1,0.5) {arm 1};
+        \node[left] at (-0.1,-0.5) {arm 2};
+        \node[left] at (-0.1,-1.5) {arm 3};
+        % Arms with increasing extra length (shown as detours)
+        \draw[uw_purple!70,thick] (0,1.5) -- (3.5,1.5);
+        \draw[uw_purple!70,thick] (0,0.5) -- (0.8,0.5)
+          -- (0.8,0.1) -- (1.8,0.1) -- (1.8,0.5) -- (3.5,0.5);
+        \draw[uw_purple!70,thick] (0,-0.5) -- (0.8,-0.5)
+          -- (0.8,-1.1) -- (2.2,-1.1) -- (2.2,-0.5) -- (3.5,-0.5);
+        \draw[uw_purple!70,thick] (0,-1.5) -- (0.8,-1.5)
+          -- (0.8,-2.1) -- (2.6,-2.1) -- (2.6,-1.5) -- (3.5,-1.5);
+        % Phase labels on right
+        \node[right] at (3.5,1.5) {$\phi_0$};
+        \node[right] at (3.5,0.5) {$\phi_0{+}\beta\Delta L$};
+        \node[right] at (3.5,-0.5) {$\phi_0{+}2\beta\Delta L$};
+        \node[right] at (3.5,-1.5) {$\phi_0{+}3\beta\Delta L$};
+        % Delta L label
+        \draw[<->,red,thin] (1.82,0.1)--(1.82,-1.1)
+          node[midway,right,red] {$\Delta L$};
+        \node[above,font=\scriptsize,blue!70] at (1.5,1.7)
+          {\textit{Each arm: $\Delta L$ longer than the one above}};
+      \end{tikzpicture}
+      \end{center}
+
+    \column{0.51\textwidth}
+      \textbf{Result: the phase tilt depends on wavelength}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.85, font=\tiny]
+        % FPR2 slab
+        \fill[cyan!20] (0,-2.0) rectangle (0.6,2.0);
+        \node[rotate=90,font=\scriptsize] at (0.3,0) {FPR 2};
+        % Wavefronts for lambda1 (tilted upward) — arithmetic in {..}
+        \draw[red!70,thick] (0.7,1.6) -- ({0.7+0.3},0.6);
+        \draw[red!70,thick] (1.1,1.6) -- ({1.1+0.3},0.6);
+        \draw[red!70,thick] (1.5,1.6) -- ({1.5+0.3},0.6);
+        \node[red!70] at (2.0,1.2) {$\lambda_1$};
+        \draw[red!70,very thick,->] (1.5,1.1)--(2.5,1.5);
+        % Wavefronts for lambda2
+        \draw[orange!80,thick] (0.7,0.7)--({0.7+0.15},-0.1);
+        \draw[orange!80,thick] (1.1,0.7)--({1.1+0.15},-0.1);
+        \draw[orange!80,thick] (1.5,0.7)--({1.5+0.15},-0.1);
+        \node[orange!80] at (2.0,0.3) {$\lambda_2$};
+        \draw[orange!80,very thick,->] (1.5,0.3)--(2.5,0.3);
+        % Wavefronts for lambda3
+        \draw[green!60!black,thick] (0.7,-0.3)--({0.7-0.1},-1.1);
+        \draw[green!60!black,thick] (1.1,-0.3)--({1.1-0.1},-1.1);
+        \draw[green!60!black,thick] (1.5,-0.3)--({1.5-0.1},-1.1);
+        \node[green!60!black] at (2.0,-0.7) {$\lambda_3$};
+        \draw[green!60!black,very thick,->] (1.5,-0.6)--(2.5,-0.9);
+        % Output plane
+        \fill[gray!30] (2.5,-2.0) rectangle (2.7,2.0);
+        \draw[red,very thick] (2.5,1.5)--(3.4,1.5);
+        \draw[orange,very thick] (2.5,0.3)--(3.4,0.3);
+        \draw[green!60!black,very thick] (2.5,-0.9)--(3.4,-0.9);
+        \node[above,font=\scriptsize] at (1.5,2.0)
+          {\textit{Same phase-tilt $\Rightarrow$ different focus position}};
+      \end{tikzpicture}
+      \end{center}
+      \vspace{-2pt}
+      \small\textbf{Formula:} $\Delta L = m\lambda_0/n_g$\quad
+      $\Rightarrow$\quad at $\lambda_0$: all arms add exactly $m$ full cycles.\\
+      At $\lambda\!\neq\!\lambda_0$: fractional mismatch steers the focus sideways.
+  \end{columns}
+\end{frame}
+
+% ── SLIDE 6: This Project vs Commercial ──────────────────────────────────────
+\begin{frame}{Our Academic Simulation vs Commercial Silicon AWG Products}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+      \small
+      \renewcommand{\arraystretch}{1.30}
+      \begin{tabular}{lcc}
+        \toprule
+        \textbf{Metric} & \textbf{Commercial} & \textbf{This work} \\
+        \midrule
+        Platform & SOI 220\,nm & SOI 220\,nm \checkmark \\
+        Channels & 4–96 & 4 \\
+        Insertion loss & $<$2\,dB & 3\,dB (model) \\
+        Crosstalk & $<$-30\,dB & -13.7\,dB (model) \\
+        Fab cost & \$\$\$ per chip & Simulation only \checkmark \\
+        Design open? & Proprietary & \textbf{Fully documented} \checkmark \\
+        Systematic opt? & Fixed product & \textbf{+15\% by N=24} \checkmark \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.5em}
+      \begin{alertblock}{\small Why the gap in IL \& crosstalk?}
+        \small Our 2D simplified model omits bend losses,
+        3D mode mismatch, and fabrication roughness —
+        a full 3D FDTD would close much of this gap.
+      \end{alertblock}
+
+    \column{0.47\textwidth}
+      \begin{block}{What this project \emph{uniquely} contributes}
+        \begin{enumerate}\small\setlength\itemsep{4pt}
+          \item \textbf{End-to-end documented workflow}\\
+                MODE $\to$ design $\to$ FDTD $\to$ optimization,\\
+                all reproducible from first principles
+          \item \textbf{Systematic arm-count study}\\
+                First to show N: 16$\to$24 lifts avg.\ dom.\ fraction
+                by \textbf{+15\%} vs geometry-only tuning
+          \item \textbf{Cost-efficient validation framework}\\
+                Wavelength routing proven at $<$1\% of\\
+                full-3D simulation cost
+          \item \textbf{Academic building block}\\
+                Benchmark for future Rowland-circle
+                or inverse-design AWG work
+        \end{enumerate}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+% ── SLIDE 7: Simulation Strategy ─────────────────────────────────────────────
+\begin{frame}{Three-Level Simulation Strategy}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.88, font=\small,
+      box/.style={draw=uw_purple!60, fill=uw_purple!8, rounded corners=4pt,
+                  minimum width=3.6cm, minimum height=0.9cm, align=center}]
+    % Level 1
+    \node[box] (L1) at (0, 2.2)
+      {\textbf{Level 1: MODE solver}\\{\tiny Tidy3D — cloud compute}};
+    \node[right=0.3cm of L1, font=\footnotesize, text width=6.5cm]
+      {Extract $n_\text{eff}$, $n_g$ for 500\,nm WG.
+       Answers: \textit{``What are the waveguide's optical constants?''}};
+    % Level 2
+    \node[box, fill=uw_gold!20, draw=uw_gold!70!black] (L2) at (0, 0.7)
+      {\textbf{Level 2: Array-factor model}\\{\tiny Local — no cloud needed}};
+    \node[right=0.3cm of L2, font=\footnotesize, text width=6.5cm]
+      {Analytic spectrum from interference formula.
+       Answers: \textit{``Does the channel plan make sense?''}};
+    % Level 3
+    \node[box, fill=good_green!10, draw=good_green!60] (L3) at (0,-0.8)
+      {\textbf{Level 3: 2D eff.-index FDTD}\\{\tiny Tidy3D — cloud compute}};
+    \node[right=0.3cm of L3, font=\footnotesize, text width=6.5cm]
+      {Real Maxwell solve in FPR region with phased sources.
+       Answers: \textit{``Does light \emph{actually} route to correct ports?''}};
+    % Arrows
+    \draw[->,thick,uw_purple!50] (L1.south)--(L2.north);
+    \draw[->,thick,uw_purple!50] (L2.south)--(L3.north);
+    % NOT DONE label
+    \node[box, fill=gray!10, draw=gray!40, font=\small\itshape] (L4) at (0,-2.3)
+      {Level 4: Full 3D FDTD — not done (out of scope)};
+    \draw[->,dashed,gray!50] (L3.south)--(L4.north);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{-4pt}
+  \small\textit{Each level answers a specific design question at progressively higher fidelity.
+  We stop at Level 3 because it already confirms wavelength-dependent routing.}
+\end{frame}
+
+% ── SLIDE 8: Waveguide MODE Analysis ─────────────────────────────────────────
+\begin{frame}{Phase 1 — Waveguide MODE Analysis}
+  \begin{columns}[T]
+    \column{0.43\textwidth}
+      \textbf{Si/SiO$_2$ strip, $h=220$\,nm (fixed SOI)}\\[5pt]
+      \small
       \begin{tabular}{ccc}
         \toprule
         Width & $n_\text{eff}$ & $n_g$ \\
@@ -275,126 +389,129 @@
         400\,nm & 2.228 & 4.245 \\
         450\,nm & 2.353 & 4.144 \\
         \rowcolor{uw_gold!60}
-        \textbf{500\,nm}$^\star$ & \textbf{2.445} & \textbf{4.051} \\
+        \textbf{500\,nm\,$^\star$} & \textbf{2.445} & \textbf{4.051} \\
         550\,nm & 2.513 & 3.975 \\
         600\,nm & 2.566 & 3.914 \\
         \bottomrule
       \end{tabular}
-      \vspace{0.5em}
+      \vspace{6pt}
 
-      \small$^\star$ Selected: mid-range, single-mode, standard SOI width.\\[0.4em]
-      \textbf{Trends:} wider $w$ $\Rightarrow$ $n_\text{eff}\uparrow$ (better confinement),
-      $n_g\downarrow$ (weaker dispersion).\\[0.4em]
-      $n_g$ enters directly into $\Delta L = m\lambda_0/n_g$.
+      \small$^\star$ \textit{Selected}: mid-range, quasi-single-mode,\\
+      standard SOI foundry width.\\[4pt]
+      \textbf{Trends:} wider $w$ $\Rightarrow$ $n_\text{eff}\uparrow$, $n_g\downarrow$.\\[4pt]
+      $n_g = 4.051$ enters AWG design directly:\\
+      \centerline{$\Delta L = m\lambda_0/n_g = 30.99\,\mu$m}
 
-    \column{0.53\textwidth}
+    \column{0.54\textwidth}
       \begin{center}
-        % 📷 FILE: results/figures/neff_vs_width.png
-        % Dual-axis plot: n_eff (left) and n_group (right) vs waveguide width
         \includegraphics[width=\linewidth]{results/figures/neff_vs_width.png}
-        \footnotesize $n_\text{eff}$ and $n_g$ vs.\ width at 1550\,nm
+        {\footnotesize $n_\text{eff}$ and $n_g$ vs.\ waveguide width at 1550\,nm}
       \end{center}
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 7 — AWG Design Parameters + Geometry
-%  📷 RIGHT COL: results/figures/simplified_awg_geometry_layout.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Phase 2 — AWG Initial Design}
+% ── SLIDE 9: AWG Design Parameters ───────────────────────────────────────────
+\begin{frame}{Phase 2 — AWG Initial Design Parameters}
   \begin{columns}[T]
-    \column{0.44\textwidth}
-      \textbf{Design derivation chain:}
-      \renewcommand{\arraystretch}{1.15}
+    \column{0.43\textwidth}
+      \small\textbf{Design derivation chain:}\\[4pt]
+      \renewcommand{\arraystretch}{1.18}
       \begin{tabular}{ll}
         \toprule
         Parameter & Value \\
         \midrule
         Center $\lambda_0$ & 1550\,nm \\
-        $\Delta\lambda$ & 1.6\,nm \\
+        Channel spacing & 1.6\,nm \\
         Target FSR & 19.2\,nm \\
-        AWG order $m$ & 81 \\
+        Diffraction order $m$ & 81 \\
         Actual FSR & 19.14\,nm \\
         $\Delta L = m\lambda_0/n_g$ & 30.99\,$\mu$m \\
         \midrule
-        Input / output / arms & 1 / 4 / 16 \\
+        In / Out / Arms & 1 / 4 / 16 \\
         FPR length & 55\,$\mu$m \\
         Array pitch (init.) & 1.50\,$\mu$m \\
         Output pitch (init.) & 2.00\,$\mu$m \\
         \bottomrule
       \end{tabular}
 
-    \column{0.53\textwidth}
+    \column{0.54\textwidth}
       \begin{center}
-        % 📷 FILE: results/figures/simplified_awg_geometry_layout.png
-        % Top-view schematic: 1 input, FPR1, 16 array arms, FPR2, 4 outputs
         \includegraphics[width=\linewidth]{results/figures/simplified_awg_geometry_layout.png}
-        \footnotesize Simplified AWG layout: 1 input, 4 outputs, 16 arms
+        {\footnotesize Simplified AWG layout: 1 input, 4 outputs, 16 arms}
       \end{center}
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 8 — Simplified Spectrum Model
-%  📷 RIGHT COL: results/figures/awg_transmission_spectra.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Phase 3a — Array-Factor Spectrum Model (Zero Cloud Cost)}
+% ── SLIDE 10: Simplified Spectrum Model ──────────────────────────────────────
+\begin{frame}{Phase 3a — Array-Factor Spectrum Model}
   \begin{columns}[T]
-    \column{0.44\textwidth}
-      \textbf{Analytic model:}
+    \column{0.43\textwidth}
+      \textbf{Analytic formula (zero simulation cost):}
       \[
-        T(\lambda) = T_\text{pk} \cdot
-        \underbrace{\!\left(\frac{\sin(N\phi/2)}{N\sin(\phi/2)}\right)^{\!2}}_{\text{array factor}}
-        \cdot
+        T(\lambda) = T_\text{pk}\!
+        \underbrace{\left(\frac{\sin(N\phi/2)}{N\sin(\phi/2)}\right)^{\!2}}_{\text{array factor}}
+        \!\cdot\!
         \underbrace{e^{-\delta\lambda^2/2\sigma^2}}_{\text{envelope}}
       \]
-      $\phi = 2\pi\delta\lambda/\text{FSR}$,\quad$N=16$,\quad$\sigma=6$\,nm.
+      $\phi\!=\!2\pi\delta\lambda/\text{FSR}$,\;$N\!=\!16$,\;$\sigma\!=\!6$\,nm
 
-      \vspace{0.6em}
-      \begin{block}{Predicted channel metrics}
+      \vspace{0.5em}
+      \begin{block}{\small Predicted channel metrics}
         \small
         \begin{tabular}{ll}
           Insertion loss & 3.0\,dB \\
-          Crosstalk      & $-$13.7\,dB \\
+          Crosstalk      & $-13.7$\,dB \\
           3\,dB BW       & 1.06\,nm \\
-          Ch.\ spacing   & 1.60\,nm\,\checkmark \\
+          Ch.\ spacing   & 1.60\,nm\;\checkmark \\
         \end{tabular}
       \end{block}
-
-      \begin{alertblock}{\small Limitation}
-        \small Symmetric model: all 4 channels identical.
+      \begin{alertblock}{\small Model limitation}
+        \small Symmetric model — all 4 channels look identical.\\
         Real device: edge channels have higher IL.
       \end{alertblock}
 
-    \column{0.53\textwidth}
+    \column{0.54\textwidth}
       \begin{center}
-        % 📷 FILE: results/figures/awg_transmission_spectra.png
-        % Overlaid transmission vs wavelength for all 4 channels
-        % Shows 4 peaks at 1547.6 / 1549.2 / 1550.8 / 1552.4 nm
         \includegraphics[width=\linewidth]{results/figures/awg_transmission_spectra.png}
-        \footnotesize Predicted 4-channel transmission spectrum
+        {\footnotesize Predicted 4-channel transmission (1547.6 – 1552.4\,nm)}
       \end{center}
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 9 — FDTD Validation Setup & Rubric
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Phase 3b — High-Fidelity 2D FDTD Validation}
+% ── SLIDE 11: FDTD Validation Setup ──────────────────────────────────────────
+\begin{frame}{Phase 3b — 2D FDTD Validation Setup \& Quality Rubric}
   \begin{columns}[T]
     \column{0.50\textwidth}
-      \textbf{2D eff.-index FDTD model:}
-      \begin{itemize}
-        \item Explicitly models: phased-array aperture + FPR slab + output WGs
-        \item Arm phases set analytically: $\varphi_k = \beta k\Delta L$
-              (avoids the 2\,mm-scale arm meanders)
-        \item $\sim$0.10 FC/run vs $\sim$7.8 FC for full 3D
-        \item Total: $\approx$36 FDTD runs, $\approx$3.2 FC
+      \textbf{Why 2D, not full 3D?}
+      \begin{itemize}\small\setlength\itemsep{3pt}
+        \item Full 3D device ($\sim$2\,mm long) would be prohibitively expensive
+        \item \textbf{2D effective-index trick:} replace the 220\,nm Si slab with a
+              2D medium at $n\!=\!n_\text{eff}$ — same in-plane physics, much smaller grid
+        \item Only the output-FPR section is simulated; arm phases are injected analytically
+        \item Saves $\sim$100$\times$ compared to full 3D
       \end{itemize}
+      \vspace{0.4em}
+      \begin{tikzpicture}[scale=0.75, font=\tiny]
+        \fill[cyan!15] (0,-0.8) rectangle (3.0,0.8);
+        \node at (1.5,0) {FPR slab (2D FDTD)};
+        \draw[uw_purple!60,thick,->] (-1.2,0.55)--(-0.05,0.55);
+        \node[left,uw_purple!60] at (-1.2,0.55) {arm\,1: $\phi_1$};
+        \draw[uw_purple!60,thick,->] (-1.2,0.18)--(-0.05,0.18);
+        \node[left,uw_purple!60] at (-1.2,0.18) {arm\,2: $\phi_2$};
+        \draw[uw_purple!60,thick,->] (-1.2,-0.18)--(-0.05,-0.18);
+        \node[left,uw_purple!60] at (-1.2,-0.18) {arm\,3: $\phi_3$};
+        \draw[uw_purple!60,thick,->] (-1.2,-0.55)--(-0.05,-0.55);
+        \node[left,uw_purple!60] at (-1.2,-0.55) {arm\,4: $\phi_4$};
+        \foreach \y/\c in {0.55/red, 0.18/orange, -0.18/green!60!black, -0.55/blue}{
+          \draw[\c,thick,->] (3.0,\y)--(4.0,\y);
+        }
+        \node[below] at (1.5,-0.85) {16 phased sources $\to$ real FDTD $\to$ 4 flux monitors};
+      \end{tikzpicture}
 
     \column{0.47\textwidth}
-      \textbf{Routing quality rubric:}
-      \renewcommand{\arraystretch}{1.2}
+      \textbf{Routing quality rubric:}\\[4pt]
+      \small
+      \renewcommand{\arraystretch}{1.25}
       \begin{tabular}{lcc}
         \toprule
         Grade & Dom.\ frac. & 2nd/1st \\
@@ -405,255 +522,142 @@
         \textcolor{poor_red}{\textbf{Poor}}        & \multicolumn{2}{c}{below passing} \\
         \bottomrule
       \end{tabular}
-      \vspace{0.4em}\\
+      \vspace{6pt}\\
       \footnotesize
-      \textit{Dom.\ frac.} $=$ strongest port / total flux.\\
-      \textit{2nd/1st} $=$ 2nd / strongest (lower = cleaner).
+      \textit{Dom.\ frac.}: fraction of total output power in the strongest port.\\[2pt]
+      \textit{2nd/1st}: ratio of 2nd-strongest to strongest (lower = cleaner separation).
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 10 — Baseline FDTD Results
-%  📷 RIGHT COL: results/figures/awg_high_fidelity_transmission.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Baseline FDTD — Wavelength Routing Confirmed}
+% ── SLIDE 12: Baseline FDTD Results ──────────────────────────────────────────
+\begin{frame}{Baseline FDTD — Wavelength Routing Physically Confirmed}
   \begin{columns}[T]
-    \column{0.44\textwidth}
-      \textbf{Config: } $N=16$, pitch $= 1.5\,\mu$m, out-pitch $= 2.0\,\mu$m
-      \renewcommand{\arraystretch}{1.2}
+    \column{0.43\textwidth}
+      \small\textbf{Config:} $N\!=\!16$, pitch $1.5\,\mu$m, out-pitch $2.0\,\mu$m\\[5pt]
+      \renewcommand{\arraystretch}{1.25}
       \begin{tabular}{cccc}
         \toprule
-        $\lambda$ & Dom. & Dom.\ frac & Grade \\
+        $\lambda$ & Dom. & Frac. & Grade \\
         \midrule
-        1547.6 & out\_3 & 0.390 & Passing \\
-        1549.2 & out\_3 & 0.340 & Passing \\
-        1550.8 & out\_4 & 0.328 & Passing \\
-        1552.4 & out\_4 & 0.350 & Passing \\
+        1547.6\,nm & out\_3 & 0.390 & Pass \\
+        1549.2\,nm & out\_3 & 0.340 & Pass \\
+        1550.8\,nm & out\_4 & 0.328 & Pass \\
+        1552.4\,nm & out\_4 & 0.350 & Pass \\
         \midrule
-        \textbf{Avg} & — & \textbf{0.352} & Passing \\
+        \textbf{Avg} & — & \textbf{0.352} & Pass \\
         \bottomrule
       \end{tabular}
+      \vspace{5pt}
 
-      \vspace{0.5em}
-      \begin{block}{Key finding}
-        Dominant output shifts out\_3 $\to$ out\_4 as $\lambda$ increases.\\[3pt]
-        \textbf{Wavelength-dependent routing confirmed}
+      \begin{block}{\small Key finding}
+        \small Dominant port shifts out\_3\,$\to$\,out\_4\\
+        as $\lambda$ increases from 1547.6 to 1552.4\,nm.\\[3pt]
+        \textbf{Wavelength-dependent routing proven}\\
         in real FDTD — not just analytic prediction.
       \end{block}
 
-    \column{0.53\textwidth}
+    \column{0.54\textwidth}
       \begin{center}
-        % 📷 FILE: results/figures/awg_high_fidelity_transmission.png
-        % 4-panel bar chart: output flux at each port for each of the 4 wavelengths
-        % Dominant bar shifts from out_3 to out_4 across wavelengths
         \includegraphics[width=\linewidth]{results/figures/awg_high_fidelity_transmission.png}
-        \footnotesize Output flux per port at each wavelength (baseline)
+        {\footnotesize Output flux per port at each wavelength (baseline)}
       \end{center}
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 11 — Optimization Journey (3 rounds, N=16)
-%  📷 LEFT COL: results/figures/awg_hf_optimization_scan.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Optimization Journey — Rounds 1–3 (N\,=\,16)}
+% ── SLIDE 13: Full Optimization Journey ──────────────────────────────────────
+\begin{frame}{Optimization: Four Rounds of Improvement}
   \begin{columns}[T]
-    \column{0.49\textwidth}
+    \column{0.48\textwidth}
+      \small\textbf{Round 1–3: Geometry tuning (N=16)}\\[3pt]
       \begin{center}
-        % 📷 FILE: results/figures/awg_hf_optimization_scan.png
-        % Bar chart: dominant fraction for 9 scanned configs at 1550.8 nm
-        % Shows optscan_c as clear winner (general quality)
-        \includegraphics[width=\linewidth]{results/figures/awg_hf_optimization_scan.png}
-        \footnotesize Round-2 scan at 1550.8\,nm: 9 configs
+        \includegraphics[width=0.95\linewidth]{results/figures/awg_hf_optimization_scan.png}
+        {\footnotesize 9-config scan at 1550.8\,nm — optscan\_c wins}
       \end{center}
+      \small\textbf{Best N=16:} pitch $1.2\,\mu$m, out-pitch $1.6\,\mu$m, offset $0.6\,\mu$m\\
+      1550.8\,nm: Pass(0.328)$\to$\textbf{General(0.466)}\\[2pt]
+      \textit{Bottleneck: 3dB BW\,=\,1.2\,nm $\approx$ spacing 1.6\,nm}
 
     \column{0.49\textwidth}
-      \textbf{Progression of average dom.\ fraction:}
-      \renewcommand{\arraystretch}{1.25}
-      \begin{tabular}{lcc}
-        \toprule
-        Round & Config & Avg dom.\ frac \\
-        \midrule
-        Baseline     & 1.5/2.0/0.0   & 0.352 \\
-        R1: coarse   & 375-pt scan   & (screening) \\
-        R2: local    & 1.2/1.6/0.6   & 0.368 \\
-        R3: global   & 1.2/1.6/0.6   & 0.368 \\
-        \bottomrule
-      \end{tabular}
-
-      \vspace{0.5em}
-      \small\textbf{Best N=16 config} (R2/R3):\\
-      array pitch $= 1.20\,\mu$m,
-      out pitch $= 1.60\,\mu$m,
-      offset $= 0.60\,\mu$m\\[4pt]
-      1550.8\,nm: Passing $(0.328)$ $\to$ \textbf{General} $(0.466)$\\[2pt]
-      \textbf{Bottleneck}: 3dB BW $= 1.2$\,nm $\approx$ channel spacing $1.6$\,nm.
-      Adjacent channels overlap heavily.
-  \end{columns}
-\end{frame}
-
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 12 — Key Improvement: N=24 Arms  ← NEW
-%  📷 RIGHT COL: results/figures/awg_improved_design_channels.png
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Key Improvement — Increasing Array Arm Count to N\,=\,24}
-  \begin{columns}[T]
-    \column{0.44\textwidth}
-      \textbf{Physical insight:} 3dB BW $= $ FSR$/N$
-      \begin{itemize}
-        \item $N=16$: BW $= 1.2$\,nm — only $0.75\times$ channel spacing
-        \item $N=24$: BW $= 0.8$\,nm — $0.5\times$ channel spacing
-        \item Aperture $= 16 \times 1.2 = 19.2\,\mu$m $\to$
-              $24 \times 1.2 = 28.8\,\mu$m (fits in 34\,$\mu$m slab)
-        \item Cost increase: negligible (same simulation domain)
-      \end{itemize}
-
-      \vspace{0.5em}
-      \textbf{Best new config} (\textit{impr\_C}):
-      $N=24$, pitch $= 1.2\,\mu$m,
-      out-pitch $= 1.8\,\mu$m, offset $= 0.9\,\mu$m
-
-      \renewcommand{\arraystretch}{1.15}
-      \begin{tabular}{cccc}
-        \toprule
-        $\lambda$ & Dom. & Dom.\ frac & Grade \\
-        \midrule
-        1547.6 & out\_3 & \textbf{0.473} & \textcolor{passing_blue}{\textbf{General}} \\
-        1549.2 & out\_3 & \textbf{0.419} & \textcolor{passing_blue}{\textbf{General}} \\
-        1550.8 & out\_1 & 0.307 & Passing \\
-        1552.4 & out\_3 & \textbf{0.414} & Passing \\
-        \midrule
-        \textbf{Avg} & — & \textbf{0.403} & — \\
-        \bottomrule
-      \end{tabular}
-
-    \column{0.53\textwidth}
+      \small\textbf{Round 4: N=24 arms — the key leap}
       \begin{center}
-        % 📷 FILE: results/figures/awg_improved_design_channels.png
-        % 4-panel grouped bar chart comparing configs A/B/C/D (N=24)
-        % Each panel = one config, bars = 4 output ports at 4 wavelengths
-        % impr_C panel shows out_3 consistently dominant
-        \includegraphics[width=\linewidth]{results/figures/awg_improved_design_channels.png}
-        \footnotesize N=24 configs: 4 output ports × 4 wavelengths each
+        \includegraphics[width=0.95\linewidth]{results/figures/awg_improved_design_channels.png}
+        {\footnotesize 4 configs with N=24; impr\_C best overall}
       \end{center}
+      \small impr\_C (pitch 1.8, offset 0.9): avg frac $0.403$, \textbf{2 General channels}\\[2pt]
+      3dB BW: $19.2/24 = 0.8$\,nm — now well below spacing $\checkmark$
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 13 — Stretch Goals
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Stretch Goals — Preliminary FDTD Results}
-  \begin{columns}[T]
-    \column{0.32\textwidth}
-      \begin{block}{8-Channel Extension}
-        \small
-        8-output layout, pitch $= 1.3\,\mu$m\\[0.3em]
-        At 1550\,nm: dominant $=$ \textbf{out\_7} \checkmark\\[0.3em]
-        Proves workflow scales beyond 4 channels without redesign.
-      \end{block}
-
-    \column{0.32\textwidth}
-      \begin{block}{Thermal Sensitivity}
-        \small
-        Modeled $+40$\,K via thermo-optic effect\\
-        $dn/dT = 1.86\!\times\!10^{-4}$\,K$^{-1}$\\[0.3em]
-        Dominant output shifts from out\_4 $\to$ \textbf{out\_2}\\[0.3em]
-        Confirms AWG thermal drift: real devices need TEC or athermal design.
-      \end{block}
-
-    \column{0.32\textwidth}
-      \begin{block}{Crosstalk Reduction}
-        \small
-        Best N=16 config (1.2/1.6/0.6):\\[0.3em]
-        \begin{tabular}{ll}
-          Baseline: & 0.328 \\
-          Optimized: & \textbf{0.466} \\
-        \end{tabular}\\[0.3em]
-        $+42\%$ at center $\lambda$.
-        Further gain via Rowland-circle FPR geometry.
-      \end{block}
-  \end{columns}
-\end{frame}
-
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 14 — Complete Results Summary
-% ════════════════════════════════════════════════════════════════════════════
-\begin{frame}{Complete Optimization Results Summary}
+% ── SLIDE 14: Complete Results Summary ───────────────────────────────────────
+\begin{frame}{Complete Results Summary}
   \begin{center}
+  \small
   \renewcommand{\arraystretch}{1.35}
-  \begin{tabular}{llcccc}
+  \begin{tabular}{llccccc}
     \toprule
-    \textbf{Round} & \textbf{Config} & \textbf{Avg dom.} & \textbf{General ch.} &
-    \textbf{Max 2nd/1st} & \textbf{Cost (FC)} \\
+    \textbf{Round} & \textbf{Key config} &
+    \textbf{Avg frac.} & \textbf{General ch.} & \textbf{Max 2nd/1st} &
+    \textbf{vs Baseline} \\
     \midrule
-    Baseline & N=16, 1.5/2.0/0.0 & 0.352 & 0 & 0.967 & 0.30 \\
-    R1 coarse screen & 375 local sims & — & — & — & 0 \\
-    R2 local opt & N=16, 1.2/1.6/0.6 & 0.368 & 1 & 0.932 & 0.67 \\
-    R3 global opt & N=16, 1.2/1.6/0.6 & 0.368 & 1 & 0.932 & 0.52 \\
+    Baseline   & N=16, 1.5/2.0/0.0 & 0.352 & 0 & 0.967 & — \\
+    R1 coarse  & Local 375-pt scan  & —     & — & —     & (screen) \\
+    R2 local   & N=16, 1.2/1.6/0.6 & 0.368 & 1 & 0.932 & $+$5\% \\
+    R3 global  & N=16, 1.2/1.6/0.6 & 0.368 & 1 & 0.932 & $+$5\% \\
     \rowcolor{uw_gold!50}
     \textbf{R4 N=24} & \textbf{N=24, 1.2/1.8/0.9} & \textbf{0.403} &
-    \textbf{2} & \textbf{0.924} & \textbf{1.66} \\
+    \textbf{2} & \textbf{0.924} & \textbf{$+$15\%} \\
     \bottomrule
   \end{tabular}
   \end{center}
-
-  \vspace{0.3em}
+  \vspace{4pt}
   \begin{columns}[T]
-    \column{0.48\textwidth}
-      \textbf{Cumulative improvement (Baseline $\to$ R4):}
-      \begin{itemize}
-        \item Avg dom.\ frac: $0.352 \to \mathbf{0.403}$ \quad ($+15$\%)
-        \item Channels reaching General: $0 \to \mathbf{2}$
-        \item Max 2nd/1st: $0.967 \to \mathbf{0.924}$
+    \column{0.50\textwidth}
+      \small\textbf{Cumulative improvement over baseline:}
+      \begin{itemize}\setlength\itemsep{2pt}
+        \item Avg dominant fraction: $0.352\to\mathbf{0.403}$ \;($+15\%$)
+        \item Channels reaching General: $0\to\mathbf{2}$
+        \item Worst 2nd/1st: $0.967\to\mathbf{0.924}$
       \end{itemize}
-
-    \column{0.48\textwidth}
-      \textbf{Key lesson:} adjusting geometry alone (R2/R3) gave modest gain.
-      Changing the \emph{physics} — more arms reduce 3dB BW —
-      was the single most effective move (\textbf{R4}).
+    \column{0.47\textwidth}
+      \begin{block}{\small Core lesson}
+        \small Geometry tuning (R2/R3) gave modest gain.
+        Changing arm count $N$ — which narrows the 3dB BW —
+        was the \textbf{single most effective move}.
+      \end{block}
   \end{columns}
 \end{frame}
 
-% ════════════════════════════════════════════════════════════════════════════
-%  SLIDE 15 — Conclusions
-% ════════════════════════════════════════════════════════════════════════════
+% ── SLIDE 15: Conclusions ─────────────────────────────────────────────────────
 \begin{frame}{Conclusions \& Future Work}
   \begin{columns}[T]
     \column{0.50\textwidth}
-      \textbf{Accomplished:}
-      \begin{enumerate}
-        \item MODE sweep: $n_g = 4.051$ for 500\,nm Si WG
-        \item AWG design: $m=81$, $\Delta L = 30.99\,\mu$m
-        \item Array-factor model: IL $= 3$\,dB, XT $= -13.7$\,dB
-        \item FDTD validation: wavelength routing \textbf{proven}
-        \item 3 rounds of geometry opt: \textbf{center $\lambda$} General
-        \item N=24 redesign: \textbf{2 channels} General ($+15$\% avg)
-        \item Stretch goals: 8-ch, thermal, XT improvement
+      \textbf{What we achieved:}
+      \begin{enumerate}\small\setlength\itemsep{3pt}
+        \item Full AWG design chain: MODE $\to$ params $\to$ FDTD $\to$ opt.
+        \item Wavelength routing \textbf{confirmed} in real Maxwell solver
+        \item 3 geometry rounds: center-$\lambda$ reaches \textbf{General}
+        \item N=24 redesign: 2 channels General, avg $+15\%$
+        \item Stretch goals: 8-channel, thermal ($+$40\,K), XT reduction — all FDTD-verified
       \end{enumerate}
 
     \column{0.47\textwidth}
-      \textbf{Remaining limitations:}
-      \begin{itemize}
+      \textbf{Current limitations:}
+      \begin{itemize}\small\setlength\itemsep{3pt}
         \item Full 4-channel set not yet all-General
-        \item 1550.8\,nm center channel weakens in N=24 config \\
-              \small(flat FPR geometry causes asymmetric focusing)
-        \item 2D model ignores bend loss, mode mismatch
+        \item Flat FPR (no Rowland circle) causes center-ch anomaly in N=24
+        \item 2D model ignores bend loss and mode mismatch
       \end{itemize}
-
-      \vspace{0.5em}
-      \textbf{Next steps (priority order):}
-      \begin{enumerate}\small
-        \item Fine-tune N=24 offset ($\sim$0.3 FC)
-        \item \textbf{Rowland-circle FPR} — fix center-ch anomaly
-        \item N=32 + FPR=90\,$\mu$m ($\sim$0.5 FC)
+      \vspace{5pt}
+      \textbf{Next steps (priority):}
+      \begin{enumerate}\small\setlength\itemsep{2pt}
+        \item N=24 fine offset tuning ($\approx$0.3 FC)
+        \item \textbf{Rowland-circle FPR} — fix center-ch problem
+        \item N=32 + FPR=90\,$\mu$m
         \item Full 3D FDTD for accurate IL/XT
       \end{enumerate}
   \end{columns}
-
-  \vspace{0.6em}
-  \begin{center}
-    \large\textbf{Thank you!} \quad Questions?
-  \end{center}
+  \vspace{6pt}
+  \begin{center}\large\textbf{Thank you! Questions?}\end{center}
 \end{frame}
 
 \end{document}

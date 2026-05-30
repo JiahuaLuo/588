@@ -4,6 +4,7 @@
   "latex-workshop.synctex.afterBuild.enabled": true,
   "latex-workshop.message.log.show": false,
   "latex-workshop.kpsewhich.path": "/Library/TeX/texbin/kpsewhich",
+
   "latex-workshop.latex.tools": [
     {
       "name": "pdflatex",
@@ -17,15 +18,32 @@
       "env": {
         "PATH": "/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin"
       }
+    },
+    {
+      "name": "xelatex",
+      "command": "/Library/TeX/texbin/xelatex",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ],
+      "env": {
+        "PATH": "/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
     }
   ],
+
   "latex-workshop.latex.recipes": [
     {
       "name": "pdflatex",
-      "tools": [
-        "pdflatex"
-      ]
+      "tools": ["pdflatex"]
+    },
+    {
+      "name": "xelatex",
+      "tools": ["xelatex", "xelatex"]
     }
   ],
+
   "latex-workshop.latex.recipe.default": "pdflatex"
 }
